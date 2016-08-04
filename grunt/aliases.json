@@ -14,7 +14,8 @@
     "clean",
     "concat",
     "uglify",
-    "replace",
+    "replace",    
+    "update_json",
     "notify:dist"
   ]
 }

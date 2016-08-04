@@ -1,0 +1,17 @@
+{
+  "name": "tiny-msg-client",
+  "repository": "iamso/u.optiscroll.js",
+  "description": "client for tiny real-time messaging server",
+  "version": "0.3.1",
+  "keywords": [
+    "tinymsg",
+    "client",
+    "websocket"
+  ],
+  "scripts": [
+    "build/client.js",
+    "build/client.min.js",
+    "build/client.next.js"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,32 @@
+{
+  "name": "tiny-msg-client",
+  "version": "0.3.1",
+  "description": "client for tiny real-time messaging server",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/iamso/tinymsg-client.git"
+  },
+  "authors": [
+    "Steve Ottoz <so@dev.so>"
+  ],
+  "main": "build/client.min.js",
+  "license": "MIT",
+  "homepage": "https://github.com/iamso/tinymsg-client.git",
+  "ignore": [
+    ".bower.json",
+    ".editorconfig",
+    ".git",
+    ".gitattributes",
+    ".gitignore",
+    "grunt",
+    "Gruntfile.js",
+    "node_modules",
+    "src"
+  ],
+  "keywords": [
+    "tinymsg",
+    "client",
+    "websocket"
+  ],
+  "dependencies": {}
+}
