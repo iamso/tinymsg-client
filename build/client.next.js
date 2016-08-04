@@ -1,5 +1,5 @@
 /*!
- * tiny-msg-client - Version 0.3.0
+ * tiny-msg-client - Version 0.3.1
  * client for tiny real-time messaging server
  * Author: Steve Ottoz <so@dev.so>
  * Build date: 2016-08-04
