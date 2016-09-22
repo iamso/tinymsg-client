@@ -1,131 +1,108 @@
 
-;(function (root, factory) {
-  'use strict';
+export class Msg {
 
-  if (/^f/.test(typeof define) && define.amd) {
-    define('msg', [], factory);
+  /**
+   * Msg constructor
+   * @param  {String}   channel   - channel to join
+   * @param  {Function} onmsg     - onmessage handler
+   * @param  {Function} onerror   - onerror handler
+   * @param  {Object}   [context] - context for event handlers
+   * @param  {String}   [url]     - websocket server url
+   */
+  constructor(channel, onmsg, onerror, context = this, url = '<%=url%>') {
+    this.url = url;
+    this.channel = channel;
+    this.onmsg = onmsg;
+    this.onerror = onerror;
+    this.context = context;
+    this.q = [];
+    this._init();
   }
-  else if (/^o/.test(typeof exports)) {
-    module.exports = factory();
+
+  /**
+   * _init function
+   * Initialize the websocket
+   */
+  _init() {
+    // return if WebSocket is not supported
+    if (!WebSocket) {
+      return;
+    }
+    this.ws = new WebSocket(this.url, this.channel);
+    this.ws.onopen = this._open.bind(this);
+    this.ws.onmessage = this._message.bind(this);
+    this.ws.onerror = this._error.bind(this);
+    this.ws.onclose = this._close.bind(this);
   }
-  else {
-    root.Msg = factory();
-  }
-})(!/^u/.test(typeof window) ? window : this, function() {
-  'use strict';
 
-  class Msg {
-
-    /**
-     * Msg constructor
-     * @param  {String}   channel   - channel to join
-     * @param  {Function} onmsg     - onmessage handler
-     * @param  {Function} onerror   - onerror handler
-     * @param  {Object}   [context] - context for event handlers
-     * @param  {String}   [url]     - websocket server url
-     */
-    constructor(channel, onmsg, onerror, context = this, url = '<%=url%>') {
-      this.url = url;
-      this.channel = channel;
-      this.onmsg = onmsg;
-      this.onerror = onerror;
-      this.context = context;
-      this.q = [];
-      this._init();
-    }
-
-    /**
-     * _init function
-     * Initialize the websocket
-     */
-    _init() {
-      // return if WebSocket is not supported
-      if (!WebSocket) {
-        return;
-      }
-      var _this = this;
-      _this.ws = new WebSocket(_this.url, _this.channel);
-      _this.ws.onopen = _this._open.bind(_this);
-      _this.ws.onmessage = _this._message.bind(_this);
-      _this.ws.onerror = _this._error.bind(_this);
-      _this.ws.onclose = _this._close.bind(_this);
-    }
-
-    /**
-     * _open function
-     * Internal onopen handler
-     * @param  {Object} e - event
-     */
-    _open(e) {
-      var _this = this;
-      while(_this.q.length) {
-        try {
-          _this.ws.send(_this.q.shift());
-        }
-        catch(e) {}
-      }
-    }
-
-    /**
-     * _message function
-     * Internal onmessage handler
-     * @param  {Object} e - event
-     */
-    _message(e) {
-      var data = e.data;
+  /**
+   * _open function
+   * Internal onopen handler
+   * @param  {Object} e - event
+   */
+  _open(e) {
+    while(this.q.length) {
       try {
-        data = JSON.parse(data);
+        this.ws.send(this.q.shift());
       }
       catch(e) {}
-      /^f/.test(typeof this.onmsg) && this.onmsg.apply(this.context, [data, e, this]);
     }
+  }
 
-    /**
-     * _error function
-     * Internal onerror handler
-     * @param  {Object} e - event
-     */
-    _error(e) {
-      /^f/.test(typeof this.onerror) && this.onerror.apply(this.context, [e, this]);
+  /**
+   * _message function
+   * Internal onmessage handler
+   * @param  {Object} e - event
+   */
+  _message(e) {
+    let data = e.data;
+    try {
+      data = JSON.parse(data);
     }
+    catch(e) {}
+    /^f/.test(typeof this.onmsg) && this.onmsg.apply(this.context, [data, e, this]);
+  }
 
-    /**
-     * _close function
-     * Internal onclose handler
-     * @param  {Object} e - event
-     */
-    _close(e) {
-      clearTimeout(this.timeout);
-      this.timeout = setTimeout(this._init.bind(this), 5000);
+  /**
+   * _error function
+   * Internal onerror handler
+   * @param  {Object} e - event
+   */
+  _error(e) {
+    /^f/.test(typeof this.onerror) && this.onerror.apply(this.context, [e, this]);
+  }
+
+  /**
+   * _close function
+   * Internal onclose handler
+   * @param  {Object} e - event
+   */
+  _close(e) {
+    clearTimeout(this.timeout);
+    this.timeout = setTimeout(this._init.bind(this), 5000);
+  }
+
+  /**
+   * send function
+   * Exposed send function
+   * @param  {Object|String} data - data to send
+   */
+  send(data) {
+    try {
+      data = JSON.stringify(data);
     }
-
-    /**
-     * send function
-     * Exposed send function
-     * @param  {Object|String} data - data to send
-     */
-    send(data) {
+    catch(e) {}
+    if (this.ws.readyState === 1) {
       try {
-        data = JSON.stringify(data);
+        this.ws.send(data);
       }
-      catch(e) {}
-      if (this.ws.readyState === 1) {
-        try {
-          this.ws.send(data);
-        }
-        catch(e) {
-          this.q.push(data);
-        }
-      }
-      else {
+      catch(e) {
         this.q.push(data);
       }
     }
-
+    else {
+      this.q.push(data);
+    }
   }
 
-
-  return Msg;
-
-
-});
+}
