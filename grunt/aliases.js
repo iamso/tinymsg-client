@@ -1,21 +1,22 @@
-{
+module.exports = {
   "default": [
     "src",
     "watch"
   ],
   "src": [
-    "jshint",
+    // "jshint",
     "concat",
     "replace",
     "notify:src"
   ],
   "dist": [
-    "jshint",
+    // "jshint",
     "clean",
     "concat",
+    // "babel",
     "uglify",
-    "replace",    
+    "replace",
     "update_json",
     "notify:dist"
   ]
-}
+};
