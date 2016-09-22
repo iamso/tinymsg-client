@@ -2,7 +2,7 @@
   "name": "tiny-msg-client",
   "repository": "iamso/u.optiscroll.js",
   "description": "client for tiny real-time messaging server",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "keywords": [
     "tinymsg",
     "client",
