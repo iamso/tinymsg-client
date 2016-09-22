@@ -16,12 +16,12 @@ module.exports = {
     src: ['build/embed/client.js'],
     dest: 'build/embed/client.min.js'
   },
-  // embedNext: {
+  // embedBabel: {
   //   options: {
   //     banner: '<%= banner %>'
   //   },
-  //   src: ['build/embed/client.next.js'],
-  //   dest: 'build/embed/client.next.min.js'
+  //   src: ['build/embed/client.babel.js'],
+  //   dest: 'build/embed/client.babel.min.js'
   // },
   dist: {
     options: {
@@ -30,11 +30,11 @@ module.exports = {
     src: ['build/client.js'],
     dest: 'build/client.min.js'
   },
-  // next: {
+  // babel: {
   //   options: {
   //     banner: '<%= banner %>'
   //   },
-  //   src: ['build/client.next.js'],
-  //   dest: 'build/client.next.min.js'
+  //   src: ['build/client.babel.js'],
+  //   dest: 'build/client.babel.min.js'
   // }
 };

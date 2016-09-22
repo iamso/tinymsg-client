@@ -4,14 +4,9 @@ module.exports = {
     presets: ['babel-preset-es2015']
   },
   dist: {
-    // files: {
-    //   'assets/js/main.js': 'assets/js/main.js'
-    // }
-    files: [{
-      expand: true,
-      cwd: 'build',
-      src: '*.next*.js',
-      dest: 'build',
-    }]
+    files: {
+      'build/client.babel.js': 'build/client.next.js',
+      'build/embed/client.babel.js': 'build/embed/client.next.js',
+    }
   }
 };
