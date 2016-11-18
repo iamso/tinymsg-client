@@ -1,6 +1,6 @@
 {
   "name": "tiny-msg-client",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "client for tiny real-time messaging server",
   "repository": {
     "type": "git",
@@ -9,7 +9,7 @@
   "authors": [
     "Steve Ottoz <so@dev.so>"
   ],
-  "main": "build/client.min.js",
+  "main": "build/client.next.js",
   "license": "MIT",
   "homepage": "https://github.com/iamso/tinymsg-client.git",
   "ignore": [

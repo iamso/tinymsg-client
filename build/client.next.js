@@ -1,13 +1,12 @@
 /*!
- * tiny-msg-client - Version 0.3.2
- * client for tiny real-time messaging server
- * Author: Steve Ottoz <so@dev.so>
- * Build date: 2016-09-22
+ * tiny-msg-client - version 0.4.0
+ *
+ * Made with ❤ by Steve Ottoz so@dev.so
+ *
  * Copyright (c) 2016 Steve Ottoz
- * Released under the MIT license
  */
 
-export class Msg {
+export default class Msg {
 
   /**
    * Msg constructor
@@ -24,70 +23,7 @@ export class Msg {
     this.onerror = onerror;
     this.context = context;
     this.q = [];
-    this._init();
-  }
-
-  /**
-   * _init function
-   * Initialize the websocket
-   */
-  _init() {
-    // return if WebSocket is not supported
-    if (!WebSocket) {
-      return;
-    }
-    this.ws = new WebSocket(this.url, this.channel);
-    this.ws.onopen = this._open.bind(this);
-    this.ws.onmessage = this._message.bind(this);
-    this.ws.onerror = this._error.bind(this);
-    this.ws.onclose = this._close.bind(this);
-  }
-
-  /**
-   * _open function
-   * Internal onopen handler
-   * @param  {Object} e - event
-   */
-  _open(e) {
-    while(this.q.length) {
-      try {
-        this.ws.send(this.q.shift());
-      }
-      catch(e) {}
-    }
-  }
-
-  /**
-   * _message function
-   * Internal onmessage handler
-   * @param  {Object} e - event
-   */
-  _message(e) {
-    let data = e.data;
-    try {
-      data = JSON.parse(data);
-    }
-    catch(e) {}
-    /^f/.test(typeof this.onmsg) && this.onmsg.apply(this.context, [data, e, this]);
-  }
-
-  /**
-   * _error function
-   * Internal onerror handler
-   * @param  {Object} e - event
-   */
-  _error(e) {
-    /^f/.test(typeof this.onerror) && this.onerror.apply(this.context, [e, this]);
-  }
-
-  /**
-   * _close function
-   * Internal onclose handler
-   * @param  {Object} e - event
-   */
-  _close(e) {
-    clearTimeout(this.timeout);
-    this.timeout = setTimeout(this._init.bind(this), 5000);
+    init.call(this);
   }
 
   /**
@@ -98,19 +34,77 @@ export class Msg {
   send(data) {
     try {
       data = JSON.stringify(data);
-    }
-    catch(e) {}
+    } catch (e) {}
     if (this.ws.readyState === 1) {
       try {
         this.ws.send(data);
-      }
-      catch(e) {
+      } catch (e) {
         this.q.push(data);
       }
-    }
-    else {
+    } else {
       this.q.push(data);
     }
   }
 
+}
+
+/**
+ * _init function
+ * Initialize the websocket
+ */
+function init() {
+  // return if WebSocket is not supported
+  if (!WebSocket) {
+    return;
+  }
+  this.ws = new WebSocket(this.url, this.channel);
+  this.ws.onopen = onopen.bind(this);
+  this.ws.onmessage = onmessage.bind(this);
+  this.ws.onerror = onerror.bind(this);
+  this.ws.onclose = onclose.bind(this);
+}
+
+/**
+ * _open function
+ * Internal onopen handler
+ * @param  {Object} e - event
+ */
+function onopen(e) {
+  while (this.q.length) {
+    try {
+      this.ws.send(this.q.shift());
+    } catch (e) {}
+  }
+}
+
+/**
+ * _message function
+ * Internal onmessage handler
+ * @param  {Object} e - event
+ */
+function onmessage(e) {
+  let data = e.data;
+  try {
+    data = JSON.parse(data);
+  } catch (e) {}
+  /^f/.test(typeof this.onmsg) && this.onmsg.apply(this.context, [data, e, this]);
+}
+
+/**
+ * _error function
+ * Internal onerror handler
+ * @param  {Object} e - event
+ */
+function onerror(e) {
+  /^f/.test(typeof this.onerror) && this.onerror.apply(this.context, [e, this]);
+}
+
+/**
+ * _close function
+ * Internal onclose handler
+ * @param  {Object} e - event
+ */
+function onclose(e) {
+  clearTimeout(this.timeout);
+  this.timeout = setTimeout(this._init.bind(this), 5000);
 }

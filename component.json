@@ -2,7 +2,7 @@
   "name": "tiny-msg-client",
   "repository": "iamso/tinymsg-client",
   "description": "client for tiny real-time messaging server",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "keywords": [
     "tinymsg",
     "client",
@@ -11,7 +11,8 @@
   "scripts": [
     "build/client.js",
     "build/client.min.js",
-    "build/client.next.js"
+    "build/client.next.js",
+    "build/client.next.min.js"
   ],
   "license": "MIT"
 }

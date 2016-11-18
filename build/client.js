@@ -1,145 +1,174 @@
 /*!
- * tiny-msg-client - Version 0.3.2
- * client for tiny real-time messaging server
- * Author: Steve Ottoz <so@dev.so>
- * Build date: 2016-09-22
+ * tiny-msg-client - version 0.4.0
+ *
+ * Made with ❤ by Steve Ottoz so@dev.so
+ *
  * Copyright (c) 2016 Steve Ottoz
- * Released under the MIT license
  */
-
-;(function (root, factory) {
+(function (global, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(['module', 'exports'], factory);
+  } else if (typeof exports !== "undefined") {
+    factory(module, exports);
+  } else {
+    var mod = {
+      exports: {}
+    };
+    factory(mod, mod.exports);
+    global.Msg = mod.exports;
+  }
+})(this, function (module, exports) {
   'use strict';
 
-  if (/^f/.test(typeof define) && define.amd) {
-    define('msg', [], factory);
-  }
-  else if (/^o/.test(typeof exports)) {
-    module.exports = factory();
-  }
-  else {
-    root.Msg = factory();
-  }
-})(!/^u/.test(typeof window) ? window : this, function() {
-  'use strict';
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-  /**
-   * Msg constructor
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+  };
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+
+  var _createClass = function () {
+    function defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
+    }
+
+    return function (Constructor, protoProps, staticProps) {
+      if (protoProps) defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) defineProperties(Constructor, staticProps);
+      return Constructor;
+    };
+  }();
+
+  var Msg = function () {
+
+    /**
+     * Msg constructor
      * @param  {String}   channel   - channel to join
      * @param  {Function} onmsg     - onmessage handler
      * @param  {Function} onerror   - onerror handler
      * @param  {Object}   [context] - context for event handlers
      * @param  {String}   [url]     - websocket server url
-   * @return {Object}               - Msg instance
-   */
-  var Msg = function(channel, onmsg, onerror, context, url) {
-    this.url = url || '';
-    this.channel = channel;
-    this.onmsg = onmsg;
-    this.onerror = onerror;
-    this.context = context || this;
-    this.q = [];
-    this._init();
-  };
-
-  /**
-   * Msg prototype
-   * @type {Object}
-   */
-  Msg.prototype = {
-
-    /**
-     * _init function
-     * Initialize the websocket
      */
-    _init: function() {
-      // return if WebSocket is not supported
-      if (!WebSocket) {
-        return;
-      }
-      var _this = this;
-      _this.ws = new WebSocket(_this.url, _this.channel);
-      _this.ws.onopen = _this._open.bind(_this);
-      _this.ws.onmessage = _this._message.bind(_this);
-      _this.ws.onerror = _this._error.bind(_this);
-      _this.ws.onclose = _this._close.bind(_this);
-    },
+    function Msg(channel, onmsg, onerror) {
+      var context = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : this;
+      var url = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : '';
 
-    /**
-     * _open function
-     * Internal onopen handler
-     * @param  {Object} e - event
-     */
-    _open: function(e) {
-      var _this = this;
-      while(_this.q.length) {
-        try {
-          _this.ws.send(_this.q.shift());
-        }
-        catch(e) {}
-      }
-    },
+      _classCallCheck(this, Msg);
 
-    /**
-     * _message function
-     * Internal onmessage handler
-     * @param  {Object} e - event
-     */
-    _message: function(e) {
-      var data = e.data;
-      try {
-        data = JSON.parse(data);
-      }
-      catch(e) {}
-      /^f/.test(typeof this.onmsg) && this.onmsg.apply(this.context, [data, e, this]);
-    },
-
-    /**
-     * _error function
-     * Internal onerror handler
-     * @param  {Object} e - event
-     */
-    _error: function(e) {
-      /^f/.test(typeof this.onerror) && this.onerror.apply(this.context, [e, this]);
-    },
-
-    /**
-     * _close function
-     * Internal onclose handler
-     * @param  {Object} e - event
-     */
-    _close: function(e) {
-      clearTimeout(this.timeout);
-      this.timeout = setTimeout(this._init.bind(this), 5000);
-    },
+      this.url = url;
+      this.channel = channel;
+      this.onmsg = onmsg;
+      this.onerror = onerror;
+      this.context = context;
+      this.q = [];
+      init.call(this);
+    }
 
     /**
      * send function
      * Exposed send function
      * @param  {Object|String} data - data to send
      */
-    send: function(data) {
-      try {
-        data = JSON.stringify(data);
-      }
-      catch(e) {}
-      if (this.ws.readyState === 1) {
+
+
+    _createClass(Msg, [{
+      key: 'send',
+      value: function send(data) {
         try {
-          this.ws.send(data);
-        }
-        catch(e) {
+          data = JSON.stringify(data);
+        } catch (e) {}
+        if (this.ws.readyState === 1) {
+          try {
+            this.ws.send(data);
+          } catch (e) {
+            this.q.push(data);
+          }
+        } else {
           this.q.push(data);
         }
       }
-      else {
-        this.q.push(data);
-      }
-    },
-  };
+    }]);
+
+    return Msg;
+  }();
+
+  exports.default = Msg;
+
 
   /**
-   * Return Msg
-   * @type {Object}
+   * _init function
+   * Initialize the websocket
    */
-  return Msg;
+  function init() {
+    // return if WebSocket is not supported
+    if (!WebSocket) {
+      return;
+    }
+    this.ws = new WebSocket(this.url, this.channel);
+    this.ws.onopen = onopen.bind(this);
+    this.ws.onmessage = onmessage.bind(this);
+    this.ws.onerror = onerror.bind(this);
+    this.ws.onclose = onclose.bind(this);
+  }
 
+  /**
+   * _open function
+   * Internal onopen handler
+   * @param  {Object} e - event
+   */
+  function onopen(e) {
+    while (this.q.length) {
+      try {
+        this.ws.send(this.q.shift());
+      } catch (e) {}
+    }
+  }
+
+  /**
+   * _message function
+   * Internal onmessage handler
+   * @param  {Object} e - event
+   */
+  function onmessage(e) {
+    var data = e.data;
+    try {
+      data = JSON.parse(data);
+    } catch (e) {}
+    /^f/.test(_typeof(this.onmsg)) && this.onmsg.apply(this.context, [data, e, this]);
+  }
+
+  /**
+   * _error function
+   * Internal onerror handler
+   * @param  {Object} e - event
+   */
+  function onerror(e) {
+    /^f/.test(_typeof(this.onerror)) && this.onerror.apply(this.context, [e, this]);
+  }
+
+  /**
+   * _close function
+   * Internal onclose handler
+   * @param  {Object} e - event
+   */
+  function onclose(e) {
+    clearTimeout(this.timeout);
+    this.timeout = setTimeout(this._init.bind(this), 5000);
+  }
+  module.exports = exports['default'];
 });
