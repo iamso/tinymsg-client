@@ -1,9 +1,9 @@
 /*!
- * tiny-msg-client - version 0.4.0
+ * tiny-msg-client - version 0.5.0
  *
  * Made with ❤ by Steve Ottoz so@dev.so
  *
- * Copyright (c) 2016 Steve Ottoz
+ * Copyright (c) 2017 Steve Ottoz
  */
 
 export default class Msg {
@@ -11,25 +11,42 @@ export default class Msg {
   /**
    * Msg constructor
    * @param  {String}   channel   - channel to join
-   * @param  {Function} onmsg     - onmessage handler
-   * @param  {Function} onerror   - onerror handler
-   * @param  {Object}   [context] - context for event handlers
    * @param  {String}   [url]     - websocket server url
    */
-  constructor(channel, onmsg, onerror, context = this, url = '') {
+  constructor(channel, url = '') {
     this.url = url;
     this.channel = channel;
-    this.onmsg = onmsg;
-    this.onerror = onerror;
-    this.context = context;
+    this.handler = {};
     this.q = [];
-    init.call(this);
+    this.init();
+  }
+
+  /**
+   * init function
+   * Initialize the websocket
+   * @return {Object} - this
+   */
+  init() {
+    // return if WebSocket is not supported
+    if (!WebSocket) {
+      this.ws = {
+        readyState: 0
+      };
+      return;
+    }
+    this.ws = new WebSocket(this.url, this.channel);
+    this.ws.onopen = this._onopen.bind(this);
+    this.ws.onmessage = this._onmessage.bind(this);
+    this.ws.onerror = this._onerror.bind(this);
+    this.ws.onclose = this._onclose.bind(this);
+    return this;
   }
 
   /**
    * send function
    * Exposed send function
    * @param  {Object|String} data - data to send
+   * @return {Object}             - this
    */
   send(data) {
     try {
@@ -44,67 +61,75 @@ export default class Msg {
     } else {
       this.q.push(data);
     }
+    return this;
   }
 
-}
-
-/**
- * _init function
- * Initialize the websocket
- */
-function init() {
-  // return if WebSocket is not supported
-  if (!WebSocket) {
-    return;
+  /**
+   * on Function
+   * Add event handlers
+   * @param  {String}   e  - event name
+   * @param  {Function} fn - event handler function
+   * @return {Object}      - this
+   */
+  on(e, fn) {
+    if (!Array.isArray(this.handler[e])) {
+      this.handler[e] = [];
+    }
+    this.handler[e].push(fn);
+    return this;
   }
-  this.ws = new WebSocket(this.url, this.channel);
-  this.ws.onopen = onopen.bind(this);
-  this.ws.onmessage = onmessage.bind(this);
-  this.ws.onerror = onerror.bind(this);
-  this.ws.onclose = onclose.bind(this);
-}
 
-/**
- * _open function
- * Internal onopen handler
- * @param  {Object} e - event
- */
-function onopen(e) {
-  while (this.q.length) {
+  /**
+   * _onopen function
+   * Internal onopen handler
+   * @param  {Object} e - event
+   */
+  _onopen(e) {
+    while (this.q.length) {
+      try {
+        this.ws.send(this.q.shift());
+      } catch (e) {}
+    }
+  }
+
+  /**
+   * _onmessage function
+   * Internal onmessage handler
+   * @param  {Object} e - event
+   */
+  _onmessage(e) {
+    let data = e.data;
     try {
-      this.ws.send(this.q.shift());
+      data = JSON.parse(data);
     } catch (e) {}
+    if (Array.isArray(this.handler.message)) {
+      for (let fn of this.handler.message) {
+        /^f/.test(typeof fn) && fn.apply(this, [e, data, this]);
+      }
+    }
   }
-}
 
-/**
- * _message function
- * Internal onmessage handler
- * @param  {Object} e - event
- */
-function onmessage(e) {
-  let data = e.data;
-  try {
-    data = JSON.parse(data);
-  } catch (e) {}
-  /^f/.test(typeof this.onmsg) && this.onmsg.apply(this.context, [data, e, this]);
-}
+  /**
+   * _onerror function
+   * Internal onerror handler
+   * @param  {Object} e - event
+   */
+  _onerror(e) {
+    if (Array.isArray(this.handler.error)) {
+      for (let fn of this.handler.error) {
+        /^f/.test(typeof fn) && fn.apply(this, [e, this]);
+      }
+    }
+  }
 
-/**
- * _error function
- * Internal onerror handler
- * @param  {Object} e - event
- */
-function onerror(e) {
-  /^f/.test(typeof this.onerror) && this.onerror.apply(this.context, [e, this]);
-}
+  /**
+   * _onclose function
+   * Internal onclose handler
+   * @param  {Object} e - event
+   */
+  _onclose(e) {
+    clearTimeout(this.timeout);
+    this.timeout = setTimeout(this.init.bind(this), 5000);
+  }
 
-/**
- * _close function
- * Internal onclose handler
- * @param  {Object} e - event
- */
-function onclose(e) {
-  clearTimeout(this.timeout);
-  this.timeout = setTimeout(this._init.bind(this), 5000);
 }

@@ -1,9 +1,9 @@
 /*!
- * tiny-msg-client - version 0.4.0
+ * tiny-msg-client - version 0.5.0
  *
  * Made with ❤ by Steve Ottoz so@dev.so
  *
- * Copyright (c) 2016 Steve Ottoz
+ * Copyright (c) 2017 Steve Ottoz
  */
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
@@ -59,34 +59,45 @@
     /**
      * Msg constructor
      * @param  {String}   channel   - channel to join
-     * @param  {Function} onmsg     - onmessage handler
-     * @param  {Function} onerror   - onerror handler
-     * @param  {Object}   [context] - context for event handlers
      * @param  {String}   [url]     - websocket server url
      */
-    function Msg(channel, onmsg, onerror) {
-      var context = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : this;
-      var url = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : '';
+    function Msg(channel) {
+      var url = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 
       _classCallCheck(this, Msg);
 
       this.url = url;
       this.channel = channel;
-      this.onmsg = onmsg;
-      this.onerror = onerror;
-      this.context = context;
+      this.handler = {};
       this.q = [];
-      init.call(this);
+      this.init();
     }
 
     /**
-     * send function
-     * Exposed send function
-     * @param  {Object|String} data - data to send
+     * init function
+     * Initialize the websocket
+     * @return {Object} - this
      */
 
 
     _createClass(Msg, [{
+      key: 'init',
+      value: function init() {
+        // return if WebSocket is not supported
+        if (!WebSocket) {
+          this.ws = {
+            readyState: 0
+          };
+          return;
+        }
+        this.ws = new WebSocket(this.url, this.channel);
+        this.ws.onopen = this._onopen.bind(this);
+        this.ws.onmessage = this._onmessage.bind(this);
+        this.ws.onerror = this._onerror.bind(this);
+        this.ws.onclose = this._onclose.bind(this);
+        return this;
+      }
+    }, {
       key: 'send',
       value: function send(data) {
         try {
@@ -101,6 +112,95 @@
         } else {
           this.q.push(data);
         }
+        return this;
+      }
+    }, {
+      key: 'on',
+      value: function on(e, fn) {
+        if (!Array.isArray(this.handler[e])) {
+          this.handler[e] = [];
+        }
+        this.handler[e].push(fn);
+        return this;
+      }
+    }, {
+      key: '_onopen',
+      value: function _onopen(e) {
+        while (this.q.length) {
+          try {
+            this.ws.send(this.q.shift());
+          } catch (e) {}
+        }
+      }
+    }, {
+      key: '_onmessage',
+      value: function _onmessage(e) {
+        var data = e.data;
+        try {
+          data = JSON.parse(data);
+        } catch (e) {}
+        if (Array.isArray(this.handler.message)) {
+          var _iteratorNormalCompletion = true;
+          var _didIteratorError = false;
+          var _iteratorError = undefined;
+
+          try {
+            for (var _iterator = this.handler.message[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+              var fn = _step.value;
+
+              /^f/.test(typeof fn === 'undefined' ? 'undefined' : _typeof(fn)) && fn.apply(this, [e, data, this]);
+            }
+          } catch (err) {
+            _didIteratorError = true;
+            _iteratorError = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+              }
+            } finally {
+              if (_didIteratorError) {
+                throw _iteratorError;
+              }
+            }
+          }
+        }
+      }
+    }, {
+      key: '_onerror',
+      value: function _onerror(e) {
+        if (Array.isArray(this.handler.error)) {
+          var _iteratorNormalCompletion2 = true;
+          var _didIteratorError2 = false;
+          var _iteratorError2 = undefined;
+
+          try {
+            for (var _iterator2 = this.handler.error[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+              var fn = _step2.value;
+
+              /^f/.test(typeof fn === 'undefined' ? 'undefined' : _typeof(fn)) && fn.apply(this, [e, this]);
+            }
+          } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+              }
+            } finally {
+              if (_didIteratorError2) {
+                throw _iteratorError2;
+              }
+            }
+          }
+        }
+      }
+    }, {
+      key: '_onclose',
+      value: function _onclose(e) {
+        clearTimeout(this.timeout);
+        this.timeout = setTimeout(this.init.bind(this), 5000);
       }
     }]);
 
@@ -108,67 +208,5 @@
   }();
 
   exports.default = Msg;
-
-
-  /**
-   * _init function
-   * Initialize the websocket
-   */
-  function init() {
-    // return if WebSocket is not supported
-    if (!WebSocket) {
-      return;
-    }
-    this.ws = new WebSocket(this.url, this.channel);
-    this.ws.onopen = onopen.bind(this);
-    this.ws.onmessage = onmessage.bind(this);
-    this.ws.onerror = onerror.bind(this);
-    this.ws.onclose = onclose.bind(this);
-  }
-
-  /**
-   * _open function
-   * Internal onopen handler
-   * @param  {Object} e - event
-   */
-  function onopen(e) {
-    while (this.q.length) {
-      try {
-        this.ws.send(this.q.shift());
-      } catch (e) {}
-    }
-  }
-
-  /**
-   * _message function
-   * Internal onmessage handler
-   * @param  {Object} e - event
-   */
-  function onmessage(e) {
-    var data = e.data;
-    try {
-      data = JSON.parse(data);
-    } catch (e) {}
-    /^f/.test(_typeof(this.onmsg)) && this.onmsg.apply(this.context, [data, e, this]);
-  }
-
-  /**
-   * _error function
-   * Internal onerror handler
-   * @param  {Object} e - event
-   */
-  function onerror(e) {
-    /^f/.test(_typeof(this.onerror)) && this.onerror.apply(this.context, [e, this]);
-  }
-
-  /**
-   * _close function
-   * Internal onclose handler
-   * @param  {Object} e - event
-   */
-  function onclose(e) {
-    clearTimeout(this.timeout);
-    this.timeout = setTimeout(this._init.bind(this), 5000);
-  }
   module.exports = exports['default'];
 });
