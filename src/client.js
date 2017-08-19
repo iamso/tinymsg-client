@@ -4,17 +4,12 @@ export default class Msg {
   /**
    * Msg constructor
    * @param  {String}   channel   - channel to join
-   * @param  {Function} onmsg     - onmessage handler
-   * @param  {Function} onerror   - onerror handler
-   * @param  {Object}   [context] - context for event handlers
    * @param  {String}   [url]     - websocket server url
    */
-  constructor(channel, onmsg, onerror, context = this, url = '<%=url%>') {
+  constructor(channel, url = '<%=url%>') {
     this.url = url;
     this.channel = channel;
-    this.onmsg = onmsg;
-    this.onerror = onerror;
-    this.context = context;
+    this.handler = {};
     this.q = [];
     this.init();
   }
@@ -66,6 +61,21 @@ export default class Msg {
   }
 
   /**
+   * on Function
+   * Add event handlers
+   * @param  {String}   e  - event name
+   * @param  {Function} fn - event handler function
+   * @return {Object}      - this
+   */
+  on(e, fn) {
+    if (!Array.isArray(this.handler[e])) {
+      this.handler[e] = [];
+    }
+    this.handler[e].push(fn);
+    return this;
+  }
+
+  /**
    * _onopen function
    * Internal onopen handler
    * @param  {Object} e - event
@@ -90,7 +100,11 @@ export default class Msg {
       data = JSON.parse(data);
     }
     catch(e) {}
-    /^f/.test(typeof this.onmsg) && this.onmsg.apply(this.context, [data, e, this]);
+    if (Array.isArray(this.handler.message)) {
+      for (let fn of this.handler.message) {
+        /^f/.test(typeof fn) && fn.apply(this, [e, data, this]);
+      }
+    }
   }
 
   /**
@@ -99,7 +113,11 @@ export default class Msg {
    * @param  {Object} e - event
    */
   _onerror(e) {
-    /^f/.test(typeof this.onerror) && this.onerror.apply(this.context, [e, this]);
+    if (Array.isArray(this.handler.error)) {
+      for (let fn of this.handler.error) {
+        /^f/.test(typeof fn) && fn.apply(this, [e, this]);
+      }
+    }
   }
 
   /**
