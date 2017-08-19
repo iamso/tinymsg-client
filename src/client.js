@@ -102,7 +102,7 @@ export default class Msg {
    */
   _onclose(e) {
     clearTimeout(this.timeout);
-    this.timeout = setTimeout(this._init.bind(this), 5000);
+    this.timeout = setTimeout(this.init.bind(this), 5000);
   }
 
 }
