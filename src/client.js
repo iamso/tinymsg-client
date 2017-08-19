@@ -22,6 +22,7 @@ export default class Msg {
   /**
    * init function
    * Initialize the websocket
+   * @return {Object} - this
    */
   init() {
     // return if WebSocket is not supported
@@ -33,12 +34,14 @@ export default class Msg {
     this.ws.onmessage = this._onmessage.bind(this);
     this.ws.onerror = this._onerror.bind(this);
     this.ws.onclose = this._onclose.bind(this);
+    return this;
   }
 
   /**
    * send function
    * Exposed send function
    * @param  {Object|String} data - data to send
+   * @return {Object}             - this
    */
   send(data) {
     try {
@@ -56,6 +59,7 @@ export default class Msg {
     else {
       this.q.push(data);
     }
+    return this;
   }
 
   /**
