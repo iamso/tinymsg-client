@@ -27,6 +27,9 @@ export default class Msg {
   init() {
     // return if WebSocket is not supported
     if (!WebSocket) {
+      this.ws = {
+        readyState: 0,
+      };
       return;
     }
     this.ws = new WebSocket(this.url, this.channel);
