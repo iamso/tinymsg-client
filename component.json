@@ -2,7 +2,7 @@
   "name": "tiny-msg-client",
   "repository": "iamso/tinymsg-client",
   "description": "client for tiny real-time messaging server",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "keywords": [
     "tinymsg",
     "client",

@@ -1,5 +1,5 @@
 /*!
- * tiny-msg-client - version 0.5.0
+ * tiny-msg-client - version 0.5.1
  *
  * Made with ❤ by Steve Ottoz so@dev.so
  *
