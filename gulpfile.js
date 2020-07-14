@@ -1,11 +1,9 @@
 'use strict';
 
 const gulp            = require('gulp');
-const gutil           = require("gulp-util");
 
 const babel           = require('gulp-babel');
 const rename          = require('gulp-rename');
-const uglify          = require('gulp-uglify');
 const banner          = require('gulp-banner');
 const replace         = require('gulp-replace');
 const notify          = require('gulp-notify');
@@ -29,99 +27,113 @@ const src             = {
   jsEmbed:      'build/embed',
 };
 
-const uglifyConfig    = {
-  mangle: {
-    except: ['http']
-  },
-  compress: {
-    drop_console: true
-  },
-  preserveComments: false,
-};
+const babelMinify = [
+  'minify',
+  {
+    mangle: {
+      exclude: []
+    },
+    deadcode: true,
+    removeConsole: true,
+    removeDebugger: true,
+    removeUndefined: true,
+    builtIns: false,
+  }
+];
 
-gulp.task('watch', () => {
-  gulp.watch(src.jsAll, ['js']);
-});
-
-gulp.task('js', ['js:old', 'js:next'], () => {
-  return gulp.src(`${src.jsEmbed}/**/*.js`)
-    .pipe(replace(/<%=url%>/g, ''))
-    .pipe(gulp.dest(src.jsDest))
-    .pipe(notify('js done'));
-});
-
-gulp.task('js:old', () => {
+gulp.task('js:es5', () => {
   return gulp.src(src.jsAll)
     .pipe(rename('Msg.js'))
     .pipe(babel({
-      presets: ['es2015', 'stage-0'],
-      plugins: [
-        "add-module-exports",
-        "transform-es2015-modules-umd"
+      presets: [
+        ['@babel/env', {
+          modules: false,
+          targets: {
+            ie: 11
+          },
+        }],
+        {comments: false}
       ],
+      plugins: [
+        ['remove-import-export', {
+          'removeImport': false,
+          'removeExport': true,
+          'removeExportDefault': false,
+          'preseveNamedDeclaration': false
+        }]
+      ]
     }))
     .pipe(rename('client.js'))
     .pipe(banner(comment))
     .pipe(gulp.dest(src.jsEmbed))
     .pipe(strip())
     .pipe(babel({
-      presets: ['babili']
+      presets: [babelMinify, {comments: false}]
     }))
     .pipe(rename('client.min.js'))
     .pipe(banner(comment))
     .pipe(gulp.dest(src.jsEmbed));
 });
 
-gulp.task('js:next', () => {
+gulp.task('js:esm', () => {
   return gulp.src(src.jsAll)
-    .pipe(rename('client.next.js'))
-    .pipe(babel({
-      presets: ['stage-0'],
-    }))
+    .pipe(rename('client.esm.js'))
     .pipe(banner(comment))
     .pipe(gulp.dest(src.jsEmbed))
     .pipe(strip())
     .pipe(babel({
-      presets: ['babili']
+      presets: [babelMinify, {comments: false}]
     }))
-    .pipe(rename('client.next.min.js'))
+    .pipe(rename('client.esm.min.js'))
     .pipe(banner(comment))
     .pipe(gulp.dest(src.jsEmbed));
 });
 
+gulp.task('js', gulp.series('js:es5', 'js:esm', () => {
+  return gulp.src(`${src.jsEmbed}/**/*.js`)
+    .pipe(replace(/<%=url%>/g, ''))
+    .pipe(gulp.dest(src.jsDest))
+    .pipe(notify('js done'));
+}));
+
+gulp.task('watch', (done) => {
+  gulp.watch(src.jsAll, ['js']);
+  done();
+});
+
 gulp.task('bump:pre', () => {
-   gulp.src(['./bower.json', './component.json', './package.json'])
+   return gulp.src(['./bower.json', './component.json', './package.json', './package-lock.json'])
     .pipe(bump({type: 'prerelease'}))
     .pipe(gulp.dest('./'));
 });
 
 gulp.task('bump:patch', () => {
-   gulp.src(['./bower.json', './component.json', './package.json'])
+   return gulp.src(['./bower.json', './component.json', './package.json', './package-lock.json'])
     .pipe(bump({type: 'patch'}))
     .pipe(gulp.dest('./'));
 });
 
 gulp.task('bump:minor', () => {
-   gulp.src(['./bower.json', './component.json', './package.json'])
+   return gulp.src(['./bower.json', './component.json', './package.json', './package-lock.json'])
     .pipe(bump({type: 'minor'}))
     .pipe(gulp.dest('./'));
 });
 
 gulp.task('bump:major', () => {
-   gulp.src(['./bower.json', './component.json', './package.json'])
+   return gulp.src(['./bower.json', './component.json', './package.json', './package-lock.json'])
     .pipe(bump({type: 'major'}))
     .pipe(gulp.dest('./'));
 });
 
-gulp.task('default', ['dist', 'watch']);
-
-gulp.task('dist', ['js'], () => {
+gulp.task('dist', gulp.series('js', () => {
   return gulp.src('./')
     .pipe(notify('dist done'));
-});
+}));
+
+gulp.task('default', gulp.series('dist', 'watch'));
 
 // generic error handler
 function onError(err) {
-  // console.log(err.toString());
+  gutil.log(err.message);
   this.emit('end');
 }
