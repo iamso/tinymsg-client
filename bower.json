@@ -1,6 +1,6 @@
 {
   "name": "tiny-msg-client",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "client for tiny real-time messaging server",
   "repository": {
     "type": "git",

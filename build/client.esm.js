@@ -1,9 +1,9 @@
 /*!
- * tiny-msg-client - version 0.5.1
+ * tiny-msg-client - version 0.6.0
  *
  * Made with ❤ by Steve Ottoz so@dev.so
  *
- * Copyright (c) 2017 Steve Ottoz
+ * Copyright (c) 2020 Steve Ottoz
  */
 
 export default class Msg {
@@ -30,7 +30,7 @@ export default class Msg {
     // return if WebSocket is not supported
     if (!WebSocket) {
       this.ws = {
-        readyState: 0
+        readyState: 0,
       };
       return;
     }
@@ -51,14 +51,17 @@ export default class Msg {
   send(data) {
     try {
       data = JSON.stringify(data);
-    } catch (e) {}
+    }
+    catch(e) {}
     if (this.ws.readyState === 1) {
       try {
         this.ws.send(data);
-      } catch (e) {
+      }
+      catch(e) {
         this.q.push(data);
       }
-    } else {
+    }
+    else {
       this.q.push(data);
     }
     return this;
@@ -85,10 +88,11 @@ export default class Msg {
    * @param  {Object} e - event
    */
   _onopen(e) {
-    while (this.q.length) {
+    while(this.q.length) {
       try {
         this.ws.send(this.q.shift());
-      } catch (e) {}
+      }
+      catch(e) {}
     }
   }
 
@@ -101,7 +105,8 @@ export default class Msg {
     let data = e.data;
     try {
       data = JSON.parse(data);
-    } catch (e) {}
+    }
+    catch(e) {}
     if (Array.isArray(this.handler.message)) {
       for (let fn of this.handler.message) {
         /^f/.test(typeof fn) && fn.apply(this, [e, data, this]);
